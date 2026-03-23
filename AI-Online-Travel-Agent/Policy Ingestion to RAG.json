@@ -27,7 +27,7 @@
       "name": "Get many rows",
       "credentials": {
         "supabaseApi": {
-          "id": "E9VeDgUfi7KxzZRW",
+          "id": "Supabase account",
           "name": "Supabase account"
         }
       }
@@ -114,7 +114,7 @@
       "name": "Update a row",
       "credentials": {
         "supabaseApi": {
-          "id": "E9VeDgUfi7KxzZRW",
+          "id": "Supabase account",
           "name": "Supabase account"
         }
       }
