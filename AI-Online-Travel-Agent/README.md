@@ -26,7 +26,14 @@ Outbound: Disruption Webhook → n8n → Google Sheets → Retell API → Outbou
 Weather:  Caller asks → Retell Custom Function → n8n → Nominatim + Open-Meteo → Voice Agent
 
 🛠️ Tech Stack
-ComponentToolVoice (STT/TTS)Retell AIOrchestrationn8n CloudDataGoogle SheetsGeocodingNominatim (OpenStreetMap)WeatherOpen-Meteo APIPhone NumberRetell AI
+| Component | Tool |
+|-----------|------|
+| Voice (STT/TTS) | Retell AI |
+| Orchestration | n8n Cloud |
+| Data | Google Sheets |
+| Geocoding | Nominatim (OpenStreetMap) |
+| Weather | Open-Meteo API |
+| Phone Number | Retell AI |
 
 📁 Files in This Repo
 FileDescriptionRetell Inbound.jsonn8n workflow — handles inbound calls, looks up traveler by phoneRetell Outbound.jsonn8n workflow — triggered by disruption, initiates outbound callWeather Tool.jsonn8n workflow — fetches live weather for any citybuild_log.mdFull build log with all steps, bugs, and lessons learnedREADME.mdThis file
