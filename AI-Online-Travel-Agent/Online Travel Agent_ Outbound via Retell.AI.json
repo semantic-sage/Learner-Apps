@@ -81,7 +81,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer key_6f8e65e6b378076d0cc63b6cb824"
+              "value": "Bearer RetellAI_API_KEY"
             }
           ]
         },
