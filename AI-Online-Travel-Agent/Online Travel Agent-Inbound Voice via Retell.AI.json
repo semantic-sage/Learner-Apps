@@ -1,0 +1,116 @@
+{
+  "name": "Online Travel Agent-Inbound Voice via Retell.AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e21c5a4-46ec-4cd7-b639-56969addef63",
+      "name": "Webhook",
+      "webhookId": "410f035e-d13a-4f6b-b804-a8a0ef1719d9"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"call_inbound\": {\n    \"dynamic_variables\": {\n      \"airline\": \"{{ $('Get row(s) in sheet').item.json.airline }}\",\n      \"confirmation_number\": \"{{ $('Get row(s) in sheet').item.json.confirmation }}\",\n      \"last_name_expected\": \"{{ $('Get row(s) in sheet').item.json.last_name_expected }}\",\n      \"has_connection\": \"{{ $('Get row(s) in sheet').item.json.has_connection }}\",\n      \"connecting_airline\": \"{{ $('Get row(s) in sheet').item.json.connecting_airline }}\",\n      \"connecting_confirmation\": \"{{ $('Get row(s) in sheet').item.json.connecting_confirmation }}\",\n      \"connection_city\": \"{{ $('Get row(s) in sheet').item.json.connection_city }}\",\n      \"connection_update\": \"{{ $('Get row(s) in sheet').item.json.connection_update }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "aa46159e-6dab-471f-8ae1-3c3d860573ad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc",
+          "mode": "list",
+          "cachedResultName": "AI Online Travel Agent Proactive Usecase",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Passenger list",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "phone",
+              "lookupValue": "={{ $json.body.call_inbound.from_number.replace('+', '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d52cf47d-d875-4a2e-a0e4-5c3c4a35d449",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bC5YRSwQhl4n5tJY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7c2be7d4-bc1f-4f84-9893-7a62d29d290c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b44787747fde1c27937c52cc409f1577af465d3af0731bbd57feab4e23212d82"
+  },
+  "id": "Q2dAA88eWI1DWkGZ",
+  "tags": []
+}

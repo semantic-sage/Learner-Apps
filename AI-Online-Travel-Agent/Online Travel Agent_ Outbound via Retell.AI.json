@@ -1,0 +1,166 @@
+{
+  "name": "Online Travel Agent: Outbound via Retell.AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-outbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2831914e-7fc9-464b-ba21-b97ec1c19ef1",
+      "name": "Webhook",
+      "webhookId": "57db51b0-d46b-4b39-8bf1-eebfdd3e26e9"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        0
+      ],
+      "id": "92ed0f44-4da0-4305-b01c-26acfcd44096",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc",
+          "mode": "list",
+          "cachedResultName": "AI Online Travel Agent Inbound Usecase",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Passenger list",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1KQwTUkLhv3lRhhhoQSF5HNZm-qNAY6sGedC2I3ikVqc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "confirmation",
+              "lookupValue": "={{ $json.body.confirmation }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "849a8553-4a7d-4370-bd93-35dd8fe3b264",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bC5YRSwQhl4n5tJY",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer key_6f8e65e6b378076d0cc63b6cb824"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from_number",
+              "value": "+13203613193"
+            },
+            {
+              "name": "to_number",
+              "value": "={{ '+' + $('Get row(s) in sheet').item.json.phone }}"
+            },
+            {
+              "name": "agent_id",
+              "value": "agent_fea97b5572c3101b31d3eb1326"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "87225e23-2c22-4990-b1bc-9663f2a3c68d",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "753fc6b3-3eb7-4ddf-bd7f-8d3b09b34381",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b44787747fde1c27937c52cc409f1577af465d3af0731bbd57feab4e23212d82"
+  },
+  "id": "1QTyq1ovwRGEKzOu",
+  "tags": []
+}
