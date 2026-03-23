@@ -1,0 +1,249 @@
+# AI Voice  Agent — Build Log
+
+## Project Summary
+A proactive voice travel assistant. The system calls travelers when their trip is disrupted (flight delay, cancellation, hotel issue). Built on Retell (voice), n8n (orchestration), and Google Sheets (data).
+
+---
+
+## What We Built So Far
+
+### Phase 1 — Retell Agent Setup
+- Created a voice agent in Retell dashboard (Conversation Flow type)
+- Set global prompt: proactive OTA travel support, calm and brief, asks one question at a time, never invents facts
+- Set opening line: "Hi, this is Travel Support calling about your upcoming trip..."
+- Purchased a Retell phone number
+- Assigned the agent to the phone number
+- Tested a live call — agent responded correctly
+
+### Phase 2 — n8n Inbound Webhook (Static JSON)
+- Created a new n8n workflow called "Retell inbound"
+- Added a **Webhook** node: Method POST, Path `retell-inbound`, Response = "Using Respond to Webhook node"
+- Added a **Respond to Webhook** node connected after Webhook
+- Set response body to static JSON (hardcoded test values):
+```
+{
+  "call_inbound": {
+    "dynamic_variables": {
+      "airline": "Demo Air",
+      "confirmation_number": "ABC123",
+      "last_name_expected": "Test"
+    }
+  }
+}
+```
+- Activated workflow and copied Production URL
+- Pasted Production URL into Retell → Phone Number → Inbound webhook
+- Also set Inbound call agent on the number (important — was missing initially)
+- Tested with PowerShell POST to confirm JSON response returned correctly
+- Tested with real phone call — agent said "Demo Air" and "ABC123" correctly
+
+**PowerShell test command:**
+```
+Invoke-WebRequest -Method Post -Uri "https://sri3.app.n8n.cloud/webhook-test/retell-inbound" -ContentType "application/json" -Body '{"hello":"test"}'
+```
+
+**Key lessons learned:**
+- Use Production URL (not webhook-test) for Retell
+- Workflow must be Active in n8n
+- Inbound call agent must be set on the phone number in Retell
+- fx (expression mode) must be OFF for plain JSON, ON for expressions
+- "Execute this step" only works when previous nodes have run — use "Execute workflow" instead
+- Test URL = for PowerShell testing; Production URL = for real Retell calls
+- Webhook node output = what came IN; Respond to Webhook = what goes OUT
+
+---
+
+### Phase 3 — Google Sheets Integration
+- Created Google Sheet named "AI Online Travel Agent Proactive Use..."
+- Sheet tab: "Passenger list"
+- Column headers (exact spelling matters):
+  - phone, airline, confirmation, last_name_expected, has_connection, connecting_airline, connecting_confirmation, connection_city, connection_update
+- Added one test row with phone number matching caller ID
+- Set up Google Sheets OAuth2 credential in n8n (same Google account as sheet owner)
+- Shared sheet with "Anyone with the link can view"
+- Added **Google Sheets** node (Get Row(s)) between Webhook and Respond to Webhook
+  - Node name in n8n: "Get row(s) in sheet"
+  - Credential: Google Sheets account
+  - Resource: Sheet Within Document
+  - Operation: Get Row(s)
+  - Document: AI Online Travel Agent sheet
+  - Sheet: Passenger list
+  - No filter yet (reads all rows)
+- Updated Respond to Webhook to use expressions (fx ON) pulling from Google Sheets:
+
+```
+{
+  "call_inbound": {
+    "dynamic_variables": {
+      "airline": "{{ $('Get row(s) in sheet').item.json.airline }}",
+      "confirmation_number": "{{ $('Get row(s) in sheet').item.json.confirmation }}",
+      "last_name_expected": "{{ $('Get row(s) in sheet').item.json.last_name_expected }}",
+      "has_connection": "{{ $('Get row(s) in sheet').item.json.has_connection }}",
+      "connecting_airline": "{{ $('Get row(s) in sheet').item.json.connecting_airline }}",
+      "connecting_confirmation": "{{ $('Get row(s) in sheet').item.json.connecting_confirmation }}",
+      "connection_city": "{{ $('Get row(s) in sheet').item.json.connection_city }}",
+      "connection_update": "{{ $('Get row(s) in sheet').item.json.connection_update }}"
+    }
+  }
+}
+```
+
+**Key lesson:** Expression node references use the exact node name in quotes: `$('Get row(s) in sheet')`. If the name is wrong, you get "Referenced node doesn't exist" error.
+
+---
+
+## Current Workflow Structure
+Webhook → Get row(s) in sheet → Respond to Webhook
+
+---
+
+### Phase 4 — Phone Filter on Google Sheets (completed)
+- Added filter to Google Sheets node: Column = `phone`, Value = expression
+- Key lessons learned:
+  - Expression must use `.toString()` to match text in sheet
+  - Retell sends `from_number` as `+17037312723` (with +1 and plus sign)
+  - Google Sheets stores phone as `17037312723` (no plus sign — sheets treats + as formula)
+  - Fix: strip the plus sign in the expression: `{{ $json.body.call_inbound.from_number.replace('+', '') }}`
+  - Real call payload path: `$json.body.call_inbound.from_number`
+  - Always check Webhook node output in a real call execution to see exact payload Retell sends
+- Tested with real phone call — agent correctly says airline and confirmation from sheet row
+
+**Final filter expression:**
+`{{ $json.body.call_inbound.from_number.replace('+', '') }}`
+
+---
+
+## ✅ Inbound Flow Complete
+Real call → Retell → n8n Webhook → Google Sheets lookup by phone → dynamic variables → agent speaks real trip data
+
+---
+
+## Phase 5 — Retell Agent Updated for Connecting Flight
+- Added all dynamic variables to global prompt in Retell
+- Agent now proactively mentions connecting flight if has_connection = "yes"
+- Tested with real call — agent correctly mentioned main flight AND connecting flight through Washington DC
+
+## Phase 6 — Outbound Workflow (partially built, blocked on KYC)
+- Created new n8n workflow "Retell Outbound"
+- Webhook node: POST, path retell-outbound
+- Google Sheets node: looks up traveler by confirmation number
+- HTTP Request node: POST to https://api.retellai.com/v2/create-phone-call
+  - Header: Authorization: Bearer api_key
+  - Body: from_number (Retell number), to_number (from sheet with + prefix), agent_id
+- BLOCKED: Retell KYC selfie verification failed — contact support@retellai.com to resolve
+- Once KYC approved, outbound calls will work
+
+## What's Next
+- Fix Retell KYC (contact support@retellai.com)
+- Test outbound call end-to-end
+- Add disruption details as dynamic variables to the outbound call body
+
+---
+
+## Key URLs
+- n8n Cloud: https://sri3.app.n8n.cloud
+- Retell dashboard: retell.ai
+
+## Retell Dynamic Variables (must match exactly in Retell flow)
+- {{airline}}
+- {{confirmation_number}}
+- {{last_name_expected}}
+- {{has_connection}}
+- {{connecting_airline}}
+- {{connecting_confirmation}}
+- {{connection_city}}
+- {{connection_update}}
+
+---
+
+## Phase 7 — Weather Tool (completed)
+- Created new n8n workflow "Weather Tool"
+- Webhook node: POST, path `weather-tool`
+- Get Coordinates node: HTTP Request GET to Nominatim (OpenStreetMap)
+  - URL: https://nominatim.openstreetmap.org/search
+  - Parameters: q = city from args, format = json, limit = 1
+  - Header: User-Agent: TravelVoiceAgent/1.0
+  - NOTE: Open-Meteo geocoding API blocked on n8n Cloud — use Nominatim instead
+- Get Weather node: HTTP Request GET to Open-Meteo
+  - URL: https://api.open-meteo.com/v1/forecast
+  - Parameters: latitude/longitude from Get Coordinates, current_weather=true, temperature_unit=fahrenheit, wind_speed_unit=mph, timezone=America/New_York
+  - Drag and drop lat/lon from left pane — do not type expressions manually
+- Respond to Webhook: returns weather_summary sentence with city, temperature, wind speed
+- Added get_weather Custom Function in Retell agent
+  - URL: Production webhook URL of Weather Tool workflow
+  - Parameters JSON schema: city (string, required)
+- Added Get Weather node to Retell Conversation Flow canvas
+  - Transition from Welcome Node: "User asks about weather"
+  - Transitions from Get Weather: "After weather is provided" and "Else" both back to Welcome Node
+  - Prompt inside Get Weather node: tell caller city, temperature, wind speed in one short sentence
+- Tested with real call — tool invoked correctly, returned real live weather (74.6F, 8.5 mph)
+
+Key lessons learned:
+- Always use drag and drop from left pane in n8n instead of typing expressions
+- Use Simulation in Retell to test without making real calls
+- Retell sends tool args under body.args.city in production calls
+- Get Weather node needs a prompt/instructions field to tell agent what to say
+- Conversation Flow nodes need transitions connected or Retell throws loop error
+
+Known issues to fix:
+- City name blank in weather response — fix: use $('Get Coordinates').item.json[0].name
+- Agent stutters on opening line — fix: change opening to not use dynamic variables, ask for confirmation number instead
+
+## What's Next
+- Fix Retell KYC (contact support@retellai.com)
+- Fix city name in weather response
+- Fix opening line stuttering
+- Build RAG (policy documents)
+- Mock flight API
+- Escalation/human handoff
+
+---
+
+## Bugs & Lessons Learned — Full Summary
+
+### Day 1 — Retell + n8n Inbound Setup
+
+**Webhook & Response Issues**
+- Bug: "No Respond to Webhook node found" error. Cause: Webhook node was added without a Respond to Webhook node. Fix: always pair Webhook with Respond to Webhook.
+- Bug: Response body empty (RawContentLength 0). Cause: fx expression mode was ON but empty. Fix: turn fx OFF for plain JSON, ON only for expressions.
+- Bug: Wrong URL given to Retell. Cause: Test URL (webhook-test) used instead of Production URL. Fix: always activate workflow and use Production URL for Retell.
+
+**Retell Configuration Issues**
+- Bug: Agent said literal {{airline}} instead of real value. Cause: Inbound call agent was set to None on the phone number. Fix: always assign an agent to the phone number in Retell settings.
+- Bug: Dynamic variables never loaded. Cause: workflow was not Active. Fix: toggle workflow Active before real calls.
+- Bug: Variables still not showing. Cause: Retell was hitting Test URL not Production. Fix: paste Production URL into Retell phone number inbound webhook setting.
+
+**Google Sheets Lookup Issues**
+- Bug: Sheet node spinning forever. Cause: "Execute this step" used instead of "Execute workflow." Fix: always use Execute workflow so previous nodes pass data through.
+- Bug: Filter returning no data. Cause: phone number in sheet had no plus sign but Retell sends +17037312723. Fix: strip plus sign using .replace('+', '') in the filter expression.
+- Bug: Filter still not working. Cause: phone stored as number type in Google Sheets. Fix: format phone column as Plain Text, then use .toString() in the expression.
+- Bug: "Referenced node doesn't exist" error. Cause: node name in expression didn't match actual node name. Fix: always copy exact node name from top of node panel.
+
+---
+
+### Day 2 — Weather Tool
+
+**n8n Expression Issues**
+- Bug: URL turned red with & in it. Cause: & is a special character that breaks n8n expression mode. Fix: use Query Parameters section instead of putting parameters in the URL.
+- Bug: Coordinates undefined. Cause: expression path wrong between test and production payloads. Fix: use drag and drop from left pane instead of typing expressions manually.
+- Bug: City name undefined. Cause: Retell wraps tool arguments under body.args.city in production but test payloads use body.city. Fix: always check Webhook node output in the actual failing execution.
+
+**API Issues**
+- Bug: Open-Meteo geocoding 403 Forbidden. Cause: n8n Cloud server IP blocked by that API. Fix: switched to Nominatim (OpenStreetMap) with User-Agent header.
+- Bug: Nominatim response format different from Open-Meteo. Cause: old expressions used results[0].latitude but Nominatim uses [0].lat and [0].lon. Fix: drag and drop after a successful run to auto-generate correct path.
+
+**Retell Canvas Issues**
+- Bug: Loop error ending call early. Cause: Get Weather node had no transitions connected. Fix: connect "After weather is provided" and "Else" back to Welcome Node.
+- Bug: Agent said nothing useful after weather data returned. Cause: Get Weather node had no prompt. Fix: add instructions inside node telling agent to relay city, temperature, wind speed.
+- Bug: City name blank in weather response. Cause: display_name expression not matching Nominatim format. Fix: use $('Get Coordinates').item.json[0].name.
+
+---
+
+### Cross-Cutting Lessons (apply everywhere)
+- Always drag and drop in n8n — never type expressions manually
+- Always check the actual failing execution Webhook node to find real payload structure
+- Test URL = PowerShell testing only; Production URL = Retell always
+- Use Retell Simulation before making real calls to save time
+- Every Retell Conversation Flow node needs both a prompt AND transitions connected
+- Execute workflow not Execute step — step only works when previous nodes already ran
+- Node names in expressions must match exactly — copy from top of node panel
