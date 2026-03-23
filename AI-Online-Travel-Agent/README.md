@@ -216,3 +216,17 @@ See `build_log.md` for a full step-by-step record of how this was built, includi
 - [ ] Human escalation / handoff flow
 - [ ] Session memory (save transcript summary after each call)
 - [ ] Amadeus API integration for real flight status polling
+
+
+**Screenshots: **
+
+One time ingestion of travel policy docs into Supabase (RAG) and storing as vectors:
+<img width="1820" height="905" alt="image" src="https://github.com/user-attachments/assets/30e15e21-0e0e-4088-92de-9dac74a5475d" /> 
+
+Supabase : vector DB
+<img width="1862" height="615" alt="image" src="https://github.com/user-attachments/assets/c16ea8b3-a1af-4acc-a625-81b41bbe5159" />
+
+Supabase - vector DB
+<img width="1863" height="633" alt="image" src="https://github.com/user-attachments/assets/287132c7-b9b1-45ed-afc9-d0e796369c68" />
+
+
