@@ -229,4 +229,8 @@ Supabase : vector DB
 Supabase - vector DB
 <img width="1863" height="633" alt="image" src="https://github.com/user-attachments/assets/287132c7-b9b1-45ed-afc9-d0e796369c68" />
 
+Adding the upload of a supplemental travel policy pdf, with chunking strategy and vector conversions of pdf:
+<img width="1814" height="888" alt="image" src="https://github.com/user-attachments/assets/f9d85a3d-dc17-4f9b-9706-449327d743b2" />
+
+
 
