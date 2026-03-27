@@ -1,0 +1,210 @@
+{
+  "name": "Online Travel Agent Policy Lookup by Retell AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "policy-lookup",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        -80
+      ],
+      "id": "8f235a8d-2d87-4d8e-a48a-6fa84783ff69",
+      "name": "Webhook",
+      "webhookId": "72e9ad42-9f5d-40e6-9348-3b4cdbbdabf3"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={\n  \"response\": \"{{ $('Supabase Vector Store').item.json.document.pageContent }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        640,
+        -80
+      ],
+      "id": "aed20e74-02c0-4847-aa9f-698452d28183",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "rpc/match_airline_policies",
+          "mode": "list",
+          "cachedResultName": "rpc/match_airline_policies"
+        },
+        "prompt": "={{ $json[\" rag_query\"] }}",
+        "topK": 1,
+        "options": {
+          "queryName": "match_airline_policies"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        -80
+      ],
+      "id": "07a5aaed-dae4-4fcc-b5aa-5bf360e689dd",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "E9VeDgUfi7KxzZRW",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-ada-002",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        176,
+        112
+      ],
+      "id": "ed818931-f424-492d-966c-a60d7c0f8203",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "jvYRW9KCEjccukrm",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "734cd87e-2a05-40f7-a97e-c212bea64c3c",
+              "name": " rag_query",
+              "value": "={{ $json.body.question }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        -80
+      ],
+      "id": "50bdfb58-9116-47ba-a919-dde3e341bab9",
+      "name": "rag_query"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "sri3.app.n8n.cloud",
+            "user-agent": "axios/1.13.2",
+            "content-length": "99",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "100.20.5.228",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9e2e75fc3f91aee3-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "100.20.5.228, 104.23.160.126",
+            "x-forwarded-host": "sri3.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-116-76c66f8fdf-bhrqj",
+            "x-is-trusted": "yes",
+            "x-real-ip": "100.20.5.228",
+            "x-retell-signature": "v=1774615198107,d=01b44cac3147fa49679b5d8ce016fb4ad39c1b497985d1c54df0c1b63b169349"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "question": "What is the cancellation policy for Delta Airlines, including any fees or deadlines?"
+          },
+          "webhookUrl": "https://sri3.app.n8n.cloud/webhook/policy-lookup",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "rag_query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "rag_query": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "bf4e6199-fc9a-481b-bd78-57c16cc6834e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b44787747fde1c27937c52cc409f1577af465d3af0731bbd57feab4e23212d82"
+  },
+  "id": "96J5hiXFBN30gvNB",
+  "tags": []
+}
