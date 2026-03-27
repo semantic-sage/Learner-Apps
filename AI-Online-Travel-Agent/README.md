@@ -332,7 +332,12 @@ Chunking Strategy = Simple
 <img width="1815" height="643" alt="image" src="https://github.com/user-attachments/assets/fe96965d-9d58-41c9-ad60-e37b8f020d0e" />
 
 N8N workflow where question from retell AI is parsed and converted into embeddings and queried from vector store
+bug: returns generic policy copy instead of specific- see output results at the bottom
 <img width="1826" height="901" alt="image" src="https://github.com/user-attachments/assets/22618721-0776-48d0-9487-95ea102dbd44" />
+
+Workaround fix: N8N workflow where airline copy was forced to be returned to retell AI (this needs to be fixed in next release)
+<img width="1824" height="823" alt="image" src="https://github.com/user-attachments/assets/fbfc2080-28ce-4a83-99a2-e759676b2950" />
+
 
 Retell AI: Conversational Voice Agent Flow
 <img width="1850" height="906" alt="image" src="https://github.com/user-attachments/assets/4c071b09-361e-46b4-9ccd-8b8d7587bf71" />
