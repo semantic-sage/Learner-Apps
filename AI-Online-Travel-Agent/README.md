@@ -232,5 +232,9 @@ Supabase - vector DB
 Adding the upload of a supplemental travel policy pdf, with chunking strategy and vector conversions of pdf:
 <img width="1814" height="888" alt="image" src="https://github.com/user-attachments/assets/f9d85a3d-dc17-4f9b-9706-449327d743b2" />
 
+N8N workflow where question from retell AI is parsed and converted into embeddings and queried from vector store
+<img width="1826" height="901" alt="image" src="https://github.com/user-attachments/assets/22618721-0776-48d0-9487-95ea102dbd44" />
+
+
 
 
