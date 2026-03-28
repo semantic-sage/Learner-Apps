@@ -1,0 +1,319 @@
+{
+  "agent_id": "",
+  "channel": "voice",
+  "last_modification_timestamp": 1774620523176,
+  "agent_name": "Online Travel Agent Voice",
+  "version_description": "linked n8n webhook to retell ai response",
+  "response_engine": {
+    "type": "conversation-flow",
+    "version": 12,
+    "conversation_flow_id": "conversation_flow_599cbf6fea73"
+  },
+  "language": "en-US",
+  "data_storage_setting": "everything",
+  "opt_in_signed_url": false,
+  "version": 12,
+  "is_published": false,
+  "version_title": "linked n8n webhook to retell ai response",
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "pii_config": {
+    "mode": "post_call",
+    "categories": []
+  },
+  "voice_id": "retell-Maren",
+  "max_call_duration_ms": 3600000,
+  "interruption_sensitivity": 0.86,
+  "normalize_for_speech": true,
+  "allow_user_dtmf": true,
+  "user_dtmf_options": {},
+  "conversationFlow": {
+    "conversation_flow_id": "conversation_flow_599cbf6fea73",
+    "version": 12,
+    "global_prompt": "You are an AI phone agent for an online travel agency. You are calling the traveler proactively because their trip may be affected (for example: a flight delay or cancellation, or a hotel issue).\nYou first provide the user's airline and flight confirmation number. Then you ask for last name. If last name does not match the booking, apologize and end the call. if it matches, proceed with the call. If the caller has a connection, provide information about their specific connection.\n\nWhen you speak, you must use the caller-specific values from Retell: {{airline}}, {{confirmation_number}}, and {{last_name_expected}} when they are present.\nAlways say the airline and confirmation number using those variables in your first substantive turn—do not invent different airlines or confirmation codes.\nLast-name check: treat {{last_name_expected}} as the only last name that should unlock the “flight delay” path for this demo. If the user’s last name does not match, follow your existing rule to apologize and end.\n\n\nYour goals:\n- Clearly explain what changed in plain language, without causing panic.\n- Say what it means for their trip in practical terms (connections, check-in timing, next steps).\n- Ask one short question at a time if you need to clarify which booking or segment they mean.\n- Offer sensible options when possible (for example: wait for updates, confirm alternate plans, contact the airline/hotel) without making up specific policies or guarantees.\n- Keep replies brief: this is a phone call—usually 1–3 short sentences, unless they ask for details.\n- Never invent confirmation codes, flight times, or refund amounts. If you don’t have the details, say what you can confirm and what you still need to verify.\n- If they are upset, acknowledge it once, then move to helpful next steps.\n- If the request is outside travel support or unsafe, politely decline and offer general assistance.\n\nStyle:\n- Calm, confident, and human. Avoid jargon. Repeat important facts (times, cities) clearly.\nYou have access to the following trip details for this caller:\n- Main airline: {{airline}}\n- Confirmation number: {{confirmation_number}}\n- Has connecting flight: {{has_connection}}\n- Connecting airline: {{connecting_airline}}\n- Connecting confirmation: {{connecting_confirmation}}\n- Connection city: {{connection_city}}\n- Connection update: {{connection_update}}\n\nIf has_connection is \"yes\", proactively mention the connecting flight status using connection_update after explaining the main flight situation.\n\nWhen the caller asks about weather at their destination, use the get_weather tool with the destination city name. Then relay the weather_summary back to the caller in a natural, conversational way. You do NOT know current weather conditions. You must ALWAYS call the get_weather tool when the caller asks about weather. Never answer weather questions from your own knowledge. \n\nWhen the caller asks about any travel policy related questions, use the get_travel_policy tool. Then tell the user: {{response}}. Then relay the relevant policy summary back to the caller. You must always use the tool and never answer travel policy questions from your own knowledge. ",
+    "nodes": [
+      {
+        "instruction": {
+          "type": "static_text",
+          "text": "Hi, this is Travel Support calling about your {{airline}} booking—confirmation {{confirmation_number}}. Is now a good time to talk for a minute?"
+        },
+        "name": "Welcome Node",
+        "edges": [
+          {
+            "id": "edge-1774129820963-mdq8orpab",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "After the opening, briefly explain the disruption using any facts provided to you in context. Then ask what they want to do next (for example: hear options, confirm details, or call back later). Keep answers short. "
+            }
+          },
+          {
+            "destination_node_id": "node-1774225846800",
+            "id": "edge-1",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "User asks about weather"
+            }
+          },
+          {
+            "id": "edge-1774227386531-volug8x8a",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "After weather is provided"
+            }
+          },
+          {
+            "destination_node_id": "node-1774321383142",
+            "id": "edge-1774321291129-yvr98ekw2",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "User asks a question that is related to a travel policy like airline booking cancelation, hotel or car rental changes, lost baggage, loyalty points etc."
+            }
+          }
+        ],
+        "start_speaker": "agent",
+        "id": "start-node-1774129061652",
+        "type": "conversation",
+        "display_position": {
+          "x": 318,
+          "y": 54
+        }
+      },
+      {
+        "name": "End Call",
+        "id": "end-call-node-1774129061652",
+        "type": "end",
+        "display_position": {
+          "x": -18,
+          "y": 462
+        },
+        "instruction": {
+          "type": "prompt",
+          "text": "Politely end the call"
+        }
+      },
+      {
+        "tool_id": "tool-1774225832165",
+        "else_edge": {
+          "destination_node_id": "start-node-1774129061652",
+          "id": "node-1774225846800-else-edge",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          }
+        },
+        "name": "Get Weather",
+        "edges": [
+          {
+            "id": "edge-1774230681524-a5u4rbode",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Tell the caller the current weather using the response from the tool. Say the city name, temperature in Fahrenheit, and wind speed in mph. Keep it to one short sentence."
+            }
+          },
+          {
+            "destination_node_id": "start-node-1774129061652",
+            "id": "edge-1774227305736-6sjsp41d0",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "After weather is provided"
+            }
+          }
+        ],
+        "id": "node-1774225846800",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 798,
+          "y": -210
+        },
+        "wait_for_result": true
+      },
+      {
+        "tool_id": "tool-1774321379161",
+        "name": "Get Travel Policy",
+        "edges": [
+          {
+            "destination_node_id": "start-node-1774129061652",
+            "id": "edge-1774321437244-bzmjoqxfp",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Tell the caller about the current travel policy related to the question using the response from the tool only. Read the policy as is."
+            }
+          },
+          {
+            "destination_node_id": "start-node-1774129061652",
+            "id": "edge-1774321522461-fsxackflv",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "After travel policy information is provided."
+            }
+          }
+        ],
+        "id": "node-1774321383142",
+        "type": "function",
+        "tool_type": "local",
+        "speak_during_execution": false,
+        "display_position": {
+          "x": 846,
+          "y": 366
+        },
+        "wait_for_result": true
+      }
+    ],
+    "components": [
+      {
+        "name": "Component L1",
+        "start_node_id": "conversation-1774139076069",
+        "conversation_flow_component_id": "cf-component-1774139076068",
+        "nodes": [
+          {
+            "name": "Conversation",
+            "edges": [],
+            "id": "conversation-1774139076069",
+            "type": "conversation",
+            "display_position": {
+              "x": 200,
+              "y": 100
+            },
+            "instruction": {
+              "type": "prompt",
+              "text": "Describe what the AI should say or do"
+            }
+          },
+          {
+            "name": "Exit Component",
+            "id": "component-end-1774139076069",
+            "type": "end",
+            "speak_during_execution": false,
+            "display_position": {
+              "x": 600,
+              "y": 100
+            },
+            "instruction": {
+              "type": "static_text",
+              "text": "Component completed"
+            }
+          }
+        ],
+        "user_modified_timestamp": 1774139076069,
+        "tools": []
+      },
+      {
+        "name": "Component L2",
+        "start_node_id": "conversation-1774139086033",
+        "conversation_flow_component_id": "cf-component-1774139086033",
+        "nodes": [
+          {
+            "name": "Conversation",
+            "edges": [],
+            "id": "conversation-1774139086033",
+            "type": "conversation",
+            "display_position": {
+              "x": 200,
+              "y": 100
+            },
+            "instruction": {
+              "type": "prompt",
+              "text": "Describe what the AI should say or do"
+            }
+          },
+          {
+            "name": "Exit Component",
+            "id": "component-end-1774139086033",
+            "type": "end",
+            "speak_during_execution": false,
+            "display_position": {
+              "x": 600,
+              "y": 100
+            },
+            "instruction": {
+              "type": "static_text",
+              "text": "Component completed"
+            }
+          }
+        ],
+        "user_modified_timestamp": 1774139086033,
+        "tools": []
+      }
+    ],
+    "start_node_id": "start-node-1774129061652",
+    "start_speaker": "agent",
+    "tools": [
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "Get current weather for a city when the caller asks about weather at their destination",
+        "type": "custom",
+        "url": "https://sri3.app.n8n.cloud/webhook/weather-tool",
+        "tool_id": "tool-1774225832165",
+        "args_at_root": false,
+        "timeout_ms": 120000,
+        "speak_after_execution": true,
+        "name": "get_weather",
+        "response_variables": {},
+        "speak_during_execution": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "The destination city to get weather for"
+            }
+          },
+          "required": [
+            "city"
+          ]
+        }
+      },
+      {
+        "headers": {},
+        "parameter_type": "json",
+        "method": "POST",
+        "query_params": {},
+        "description": "do semantic search on travel policy using RAG",
+        "type": "custom",
+        "url": "https://sri3.app.n8n.cloud/webhook/policy-lookup",
+        "tool_id": "tool-1774321379161",
+        "args_at_root": true,
+        "timeout_ms": 120000,
+        "speak_after_execution": true,
+        "name": "get_travel_policy",
+        "response_variables": {
+          "response": "response"
+        },
+        "speak_during_execution": false,
+        "parameters": {
+          "type": "object",
+          "required": [
+            "question"
+          ],
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "The user's exact policy question. Copy what they just asked."
+            }
+          }
+        }
+      }
+    ],
+    "model_choice": {
+      "type": "cascading",
+      "model": "gpt-4.1"
+    },
+    "tool_call_strict_mode": true,
+    "knowledge_base_ids": [],
+    "kb_config": {
+      "top_k": 3,
+      "filter_score": 0.6
+    },
+    "begin_tag_display_position": {
+      "x": 6,
+      "y": 102
+    },
+    "is_published": false,
+    "flex_mode": true,
+    "is_transfer_cf": false
+  }
+}
