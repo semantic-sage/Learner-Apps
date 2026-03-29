@@ -1,0 +1,244 @@
+{
+  "name": "Sri- Voice Agent Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -752,
+        -48
+      ],
+      "id": "064f9d76-452c-43de-a15e-b8f8a52e633d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sriadidam@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sriadidam@gmail.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        -48
+      ],
+      "id": "29a09423-d2ea-4917-af07-883d978faaf7",
+      "name": "Get many events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "XBfZ3JM1Sh2r4YcS",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Extract the structured fields from the event. If event is empty, return empty string. return only JSON that matches the required schema. extract description."
+            },
+            {
+              "content": "=Start Time: {{ $json.start.dateTime }}\nEnd Time: {{ $json.end.dateTime }}\nDescription: {{ $json.description }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_schema",
+              "schema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\n      \"type\": \"string\",\n      \"description\": \"Name of the person from the description field\"\n    },\n    \"email\": {\n      \"type\": \"string\",\n      \"format\": \"email\",\n      \"description\": \"Email address of the person\"\n    },\n    \"phone_number\": {\n      \"type\": \"string\",\n      \"description\": \"Phone number of the person\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reason for the meeting\"\n    },\n    \"start_time\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"Start time of the calendar event\"\n    },\n    \"end_time\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\",\n      \"description\": \"End time of the calendar event\"\n    }\n  },\n  \"required\": [\n    \"name\",\n    \"email\",\n    \"phone_number\",\n    \"reason\",\n    \"start_time\",\n    \"end_time\"\n  ],\n  \"additionalProperties\": false\n}"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "d366b565-cc4e-46cf-a40f-efa995210dcb",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jvYRW9KCEjccukrm",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cdf2b0a3-4ba0-4fef-8f28-1c0ff6f015c2",
+              "name": "Name",
+              "value": "={{ $json.output[0].content[0].text.name }}",
+              "type": "string"
+            },
+            {
+              "id": "cbb1d904-db2b-49d6-a9e2-00efa170963b",
+              "name": "Email",
+              "value": "={{ $json.output[0].content[0].text.email }}",
+              "type": "string"
+            },
+            {
+              "id": "6e677621-5f58-489f-9c14-78574c2bc0d9",
+              "name": "Phone",
+              "value": "={{ $json.output[0].content[0].text.phone_number }}",
+              "type": "string"
+            },
+            {
+              "id": "359ee19d-7824-4782-b545-944c31832ac3",
+              "name": "Reason",
+              "value": "={{ $json.output[0].content[0].text.reason }}",
+              "type": "string"
+            },
+            {
+              "id": "fb6423f5-69eb-43de-8554-2fec0c1afbcc",
+              "name": "Start Time",
+              "value": "={{ $json.output[0].content[0].text.start_time }}",
+              "type": "string"
+            },
+            {
+              "id": "2e8a3242-1621-4ad3-b444-59d8219d876f",
+              "name": "End Time",
+              "value": "={{ $json.output[0].content[0].text.end_time }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        -48
+      ],
+      "id": "39acbd24-1457-40fc-b4a8-d9a82275a650",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retellai.com/v2/create-phone-call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \n\"from_number\": \"+13203613193\", \n\"to_number\": \"{{ $json.Phone }}\", \n\"retell_llm_dynamic_variables\": { \n\"name\": \"{{ $json.Name }}\", \n\"phone_number\": \"{{ $json.Phone }}\", \n\"reason\": \"{{ $json.Reason }}\", \n\"start_time\": \"{{ $json[\"Start Time\"] }}\", \n\"end_time\": \"{{ $json[\"End Time\"] }}\" \n}, \n\"override_agent_id\": \"agent_784e79412e6ec1a3c813fd1fe1\" \n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -48
+      ],
+      "id": "c6f97ee6-e795-4c69-b351-ae43a20d8e2f",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "EWyQ4Rukyv3rRNA2",
+          "name": "Retell Voice Agent 1"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "576d0db9-6bb0-4a7b-820e-967a07f2ed4f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b44787747fde1c27937c52cc409f1577af465d3af0731bbd57feab4e23212d82"
+  },
+  "id": "1KDhww2dRSCcpcnG",
+  "tags": [
+    {
+      "name": "outbound",
+      "id": "Kfl2PR1MPMhZ8omD",
+      "updatedAt": "2026-03-29T18:21:08.061Z",
+      "createdAt": "2026-03-29T18:21:08.061Z"
+    },
+    {
+      "name": "calendar appoint confirm",
+      "id": "iIri92Y0fqBlnrHt",
+      "updatedAt": "2026-03-29T18:20:55.079Z",
+      "createdAt": "2026-03-29T18:20:55.079Z"
+    }
+  ]
+}
